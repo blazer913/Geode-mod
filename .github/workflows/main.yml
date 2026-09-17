@@ -36,6 +36,7 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           combine: true
+          sdk: v5.10.1
           target: ${{ matrix.config.target }}
 
       - name: Upload build artifact
