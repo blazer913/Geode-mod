@@ -1,27 +1,47 @@
 name: Build Geode Mod
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
-  workflow_dispatch:  # lets you trigger manually from GitHub's UI/app
+    branches:
+      - "**"
 
 jobs:
   build:
-    runs-on: windows-latest  # Geode mods usually target Windows GD
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: Windows
+            os: windows-latest
+            target: Win64
+
+          - name: Android32
+            os: ubuntu-latest
+            target: Android32
+
+          - name: Android64
+            os: ubuntu-latest
+            target: Android64
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup Geode CLI & build
+      - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
-          combos: |
-            [{"platform": "win", "geode": "nightly"}]
+          combine: true
+          target: ${{ matrix.config.target }}
 
-      - name: Upload .geode artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mod-build
+          name: build-${{ matrix.config.name }}
           path: build/**/*.geode
+
+  combi
