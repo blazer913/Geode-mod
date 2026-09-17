@@ -1,15 +1,17 @@
 {
-  "geode": "5.10.1",
-  "gd": {
-    "win": "2.2081",
-    "android": "2.2081"
-  },
-  "id": "blaze.toasty-window-analyzer",
-  "name": "Toasty Window Analyzer",
-  "version": "v0.2.0",
-  "developers": [
-    "Blaze"
-  ],
-  "description": "Analyzes Toasty Replay Lite input timing windows and displays a 1-10 frame histogram overlay.",
-  "repository": "https://github.com/blazer913/Geod"
+	"geode": "5.10.1",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "1",
+	"name": "MOD_NAME",
+	"version": "1.0.0",
+	"developer": "MOD_DEVELOPER",
+	"description": "MOD_DESCRIPTION",
+	"dependencies": {
+		"geode.node-ids": ">=v1.23.3"
+	}
 }
