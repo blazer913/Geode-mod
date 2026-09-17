@@ -44,18 +44,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download all platform builds
-        uses: actions/download-artifact@v4
-        with:
-          pattern: geode-build-*
-          path: builds
-          merge-multiple: true
-
-      - name: Combine Geode packages
+      - name: Combine Geode builds
+        id: combine
         uses: geode-sdk/build-geode-mod/combine@main
 
-      - name: Upload combined mod
-        uses: actions/upload-artifact@v4
+      - name: Upload final Geode
+        uses: actions/upload-artifact@v7
         with:
           name: Toasty-Window-Analyzer
-          path: "*.geode"
+          path: ${{ steps.combine.outputs.build-output }}
