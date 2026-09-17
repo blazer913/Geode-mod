@@ -39,29 +39,23 @@ jobs:
           sdk: v5.10.1
           target: ${{ matrix.config.target }}
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.config.name }}
-          path: build/**/*.geode
-
   combine:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download all platform builds
+        uses: actions/download-artifact@v4
         with:
+          pattern: geode-build-*
           path: builds
-          pattern: build-*
           merge-multiple: true
 
-      - name: Combine into final .geode
+      - name: Combine Geode packages
         uses: geode-sdk/build-geode-mod/combine@main
-        with:
-          path: builds
 
-      - name: Upload final .geode
+      - name: Upload combined mod
         uses: actions/upload-artifact@v4
         with:
-          name: Final Mod (.geode)
+          name: Toasty-Window-Analyzer
           path: "*.geode"
