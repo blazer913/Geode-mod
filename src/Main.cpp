@@ -47,7 +47,7 @@ class $modify(WindowAnalyzerPlayLayer, PlayLayer) {
         using namespace geode::utils::file;
         this->retain();
         async::spawn(
-            pick(FilePickMode::OpenFile, FilePickOptions{}),
+            pick(PickMode::OpenFile, FilePickOptions{}),
             [this](Result<std::optional<std::filesystem::path>> result) {
                 this->handlePickResult(result);
                 this->release();
