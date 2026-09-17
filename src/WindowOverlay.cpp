@@ -26,7 +26,25 @@ bool WindowOverlay::init() {
     m_text = CCLabelBMFont::create("INPUT WINDOWS", "bigFont.fnt");
     m_text->setAnchorPoint({0.f, 1.f});
     m_text->setPosition({8.f, -8.f});
+    m_text->setScale(0.5f);
     this->addChild(m_text);
+
+    auto buttonSprite = ButtonSprite::create("Analyze Replay");
+    buttonSprite->setScale(0.6f);
+    auto button = CCMenuItemSpriteExtra::create(
+        buttonSprite, this, menu_selector(WindowOverlay::onAnalyzeButton)
+    );
+
+    m_menu = CCMenu::create();
+    m_menu->addChild(button);
+    m_menu->setAnchorPoint({0.f, 1.f});
+    m_menu->setPosition({8.f, -8.f});
+    this->addChild(m_menu);
+
+    m_status = CCLabelBMFont::create("No replay loaded.", "chatFont.fnt");
+    m_status->setAnchorPoint({0.f, 1.f});
+    m_status->setScale(0.5f);
+    this->addChild(m_status);
 
     this->rebuild();
     return true;
@@ -62,6 +80,14 @@ void WindowOverlay::setWindows(std::vector<InputWindow> windows) {
     out << "RED 1";
 
     m_text->setString(out.str().c_str());
+    this->relayout();
+}
+
+void WindowOverlay::setStatus(std::string const& text) {
+    if (m_status) {
+        m_status->setString(text.c_str());
+        this->relayout();
+    }
 }
 
 void WindowOverlay::setVisibleForUser(bool visible) {
@@ -71,6 +97,20 @@ void WindowOverlay::setVisibleForUser(bool visible) {
 
 void WindowOverlay::rebuild() {
     setWindows({});
+}
+
+void WindowOverlay::relayout() {
+    if (!m_text || !m_menu || !m_status) return;
+
+    float textBottom = -8.f - m_text->getScaledContentSize().height - 6.f;
+    m_menu->setPosition({8.f, textBottom});
+
+    float menuBottom = textBottom - m_menu->getScaledContentSize().height - 6.f;
+    m_status->setPosition({8.f, menuBottom});
+}
+
+void WindowOverlay::onAnalyzeButton(CCObject*) {
+    if (m_onAnalyzeClicked) m_onAnalyzeClicked();
 }
 
 bool WindowOverlay::ccTouchBegan(CCTouch* touch, CCEvent*) {
