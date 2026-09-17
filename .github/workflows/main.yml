@@ -44,4 +44,23 @@ jobs:
           name: build-${{ matrix.config.name }}
           path: build/**/*.geode
 
-  combi
+  combine:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: builds
+          pattern: build-*
+          merge-multiple: true
+
+      - name: Combine into final .geode
+        uses: geode-sdk/build-geode-mod/combine@main
+        with:
+          path: builds
+
+      - name: Upload final .geode
+        uses: actions/upload-artifact@v4
+        with:
+          name: Final Mod (.geode)
+          path: "*.geode"
