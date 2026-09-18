@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <fstream>
