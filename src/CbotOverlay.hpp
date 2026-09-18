@@ -1,17 +1,30 @@
 #pragma once
 #include <Geode/Geode.hpp>
-#include <Geode/ui/GeodeUI.hpp>
+#include "Controller.hpp"
+#include <functional>
+#include <string>
 
 namespace cbot {
-class CbotOverlay : public geode::Popup<> {
-protected:
-    bool setup() override;
+
+class CbotOverlay : public cocos2d::CCLayer {
 public:
     static CbotOverlay* create();
+    bool init() override;
+
     void setFrame(int frame);
-    void setStatus(const char* status);
+    void setStatus(std::string const& status);
+    void setCounterVisible(bool visible);
+    void setOnCommand(std::function<void(Command)> cb) { m_onCommand = std::move(cb); }
+
 private:
-    cocos2d::CCLabelBMFont* m_frame = nullptr;
-    cocos2d::CCLabelBMFont* m_status = nullptr;
+    void onRecord(cocos2d::CCObject*);
+    void onPlay(cocos2d::CCObject*);
+    void onToggleCounter(cocos2d::CCObject*);
+
+    cocos2d::CCNode* m_counterNode = nullptr;
+    cocos2d::CCLabelBMFont* m_frameLabel = nullptr;
+    cocos2d::CCLabelBMFont* m_statusLabel = nullptr;
+    std::function<void(Command)> m_onCommand;
 };
+
 }
