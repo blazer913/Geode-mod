@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <Geode/ui/Popup.hpp> // Required for Geode v2 Popups
 #include "macro.hpp"
 
 using namespace geode::prelude;
@@ -19,15 +20,15 @@ protected:
         );
         
         menu->addChild(toggleBtn);
-        
         menu->setLayout(ColumnLayout::create()->setGap(10.f));
-        m_mainLayer->addChild(menu);
+        
+        // m_mainLayer is inherited from the fully defined Popup class now
+        this->m_mainLayer->addChild(menu);
 
         return true;
     }
 
     void onToggleMacro(CCObject* sender) {
-        // Replace with your actual macro execution logic from macro.hpp
         log::info("Macro button pressed.");
         FLAlertLayer::create("Macro", "Macro toggled!", "OK")->show();
     }
@@ -35,7 +36,8 @@ protected:
 public:
     static MacroModMenu* create() {
         auto ret = new MacroModMenu();
-        if (ret && ret->initAnchored(320.f, 240.f)) { 
+        // Use init() for Geode v2 compatibility instead of initAnchored()
+        if (ret && ret->init(320.f, 240.f)) { 
             ret->autorelease();
             return ret;
         }
