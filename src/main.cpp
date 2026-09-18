@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/PlayerObject.hpp>
+#include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/PauseLayer.hpp>
 #include <Geode/ui/Notification.hpp>
 #include "MacroModMenu.hpp"
@@ -11,17 +12,6 @@ using namespace geode::prelude;
 class $modify(MyPlayerObject, PlayerObject) {
     void pushButton(PlayerButton button) {
         PlayerObject::pushButton(button);
-
-        auto& engine = MacroEngine::get();
-        if (engine.debugPending) {
-            engine.debugPending = false;
-            geode::Notification::create(
-                "DEBUG: state=" + std::to_string(static_cast<int>(engine.m_state)) +
-                " isPlayback=" + std::to_string(engine.m_isPlaybackInput),
-                NotificationIcon::Info
-            )->show();
-        }
-
         this->recordFromPlayerObject(button, true);
     }
 
@@ -32,12 +22,18 @@ class $modify(MyPlayerObject, PlayerObject) {
 
     void recordFromPlayerObject(PlayerButton button, bool isDown) {
         auto& engine = MacroEngine::get();
-        if (engine.m_state != MacroEngine::State::Recording || engine.m_isPlaybackInput)
-            return;
-
         auto pl = PlayLayer::get();
         bool isPlayer1 = !pl || pl->m_player1 == this;
         engine.recordInput(static_cast<int>(button), isDown, isPlayer1);
+    }
+};
+
+class $modify(MyGameLayer, GJBaseGameLayer) {
+    void handleButton(bool isDown, int button, bool isPlayer1) {
+        auto& engine = MacroEngine::get();
+        engine.recordInput(button, isDown, isPlayer1);
+
+        GJBaseGameLayer::handleButton(isDown, button, isPlayer1);
     }
 };
 
