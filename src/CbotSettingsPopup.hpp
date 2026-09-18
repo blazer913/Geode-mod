@@ -6,7 +6,7 @@
 
 namespace cbot {
 
-class CbotSettingsPopup : public geode::Popup<> {
+class CbotSettingsPopup : public geode::Popup {
 protected:
     bool init();
 
