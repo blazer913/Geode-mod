@@ -30,8 +30,8 @@ private:
 
     cocos2d::CCLabelBMFont* m_macroStatusLabel = nullptr;
     cocos2d::CCLabelBMFont* m_macroLengthLabel = nullptr;
-    cocos2d::CCMenuItemSpriteExtra* m_recordBtn = nullptr;
-    cocos2d::CCMenuItemSpriteExtra* m_playBtn = nullptr;
+    CCMenuItemSpriteExtra* m_recordBtn = nullptr;
+    CCMenuItemSpriteExtra* m_playBtn = nullptr;
 
     cocos2d::CCLabelBMFont* m_counterStateLabel = nullptr;
     cocos2d::CCLabelBMFont* m_calculateResultLabel = nullptr;
