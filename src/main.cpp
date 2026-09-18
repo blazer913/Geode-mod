@@ -2,6 +2,7 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/UILayer.hpp>
+#include <Geode/ui/Notification.hpp> // Required for modern toast notifications
 #include "MacroModMenu.hpp"
 #include "macro.hpp"
 
@@ -33,7 +34,9 @@ class $modify(MyPlayLayer, PlayLayer) {
             if (engine.m_playbackIndex >= engine.m_inputs.size()) {
                 engine.m_state = MacroEngine::State::Idle;
                 log::info("Playback finished.");
-                FLAlertLayer::create("Macro", "Playback Finished", "OK")->show();
+                
+                // Show a clean toast notification instead of blocking the screen
+                geode::Notification::create("Playback Finished", NotificationIcon::Success)->show();
             }
         }
     }
@@ -107,22 +110,23 @@ class $modify(MyUILayer, UILayer) {
         return true;
     }
 
-    // Mobile touch callbacks
+    // Mobile touch callbacks with Geode Notifications
     void onRecordBtn(CCObject* sender) {
         MacroEngine::get().toggleRecording();
-        
-        // Optional visual feedback on mobile
         auto alertStr = MacroEngine::get().m_state == MacroEngine::State::Recording ? "Recording Started" : "Recording Stopped";
-        auto notif = NotificationCenter::sharedNotificationCenter();
+        
+        geode::Notification::create(alertStr, NotificationIcon::Info)->show();
         log::info("{}", alertStr);
     }
 
     void onPlayBtn(CCObject* sender) {
         MacroEngine::get().togglePlayback();
-        log::info("Playback toggled");
+        auto alertStr = MacroEngine::get().m_state == MacroEngine::State::Playing ? "Playback Started" : "Playback Stopped";
+        
+        geode::Notification::create(alertStr, NotificationIcon::Info)->show();
+        log::info("{}", alertStr);
     }
 
-    // Keep the PC keybinds working alongside the mobile buttons
     void keyDown(cocos2d::enumKeyCodes key, double timestamp) {
         if (key == cocos2d::enumKeyCodes::KEY_R) {
             this->onRecordBtn(nullptr);
