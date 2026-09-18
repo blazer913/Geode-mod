@@ -1,70 +1,81 @@
 #pragma once
-
-#include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
-#include <string>
+#include <Geode/Geode.hpp>
 #include <vector>
+#include <algorithm>
 
-// One recorded input (a press or a release).
-struct FWInput {
-	int frame = 0;        // physics step the input was applied on
-	bool down = true;     // press (true) or release (false)
-	bool p2 = false;      // player 2?
-	int button = 1;       // 1 = jump, 2/3 = platformer left/right
-	float x = 0.f;        // player position when the input happened
-	float y = 0.f;
+using namespace geode::prelude;
 
-	// Frame-window results. window < 0 means "not analysed yet".
-	// window == 0 means the macro itself fails at this input.
-	int window = -1;      // total frames the input can land on (left + right + 1)
-	int left = 0;         // frames it can be moved earlier
-	int right = 0;        // frames it can be moved later
+// Stores exactly what happened, when it happened, and to which player
+struct MacroInput {
+    int frame;
+    PlayerButton button;
+    bool isDown;
+    bool isPlayer1;
 };
 
-struct FWMacro {
-	std::vector<FWInput> inputs;
+class MacroEngine {
+public:
+    enum class State { Idle, Recording, Playing };
+    
+    State m_state = State::Idle;
+    std::vector<MacroInput> m_inputs;
+    size_t m_playbackIndex = 0;
+    int m_currentFrame = 0;
 
-	void clear() { inputs.clear(); }
-	int lastFrame() const { return inputs.empty() ? 0 : inputs.back().frame; }
+    static MacroEngine& get() {
+        static MacroEngine instance;
+        return instance;
+    }
 
-	bool save(std::filesystem::path const& path) const {
-		std::error_code ec;
-		std::filesystem::create_directories(path.parent_path(), ec);
-		std::ofstream f(path, std::ios::trunc);
-		if (!f) return false;
-		f << std::setprecision(9);
-		f << "FWM1 " << inputs.size() << '\n';
-		for (auto const& i : inputs) {
-			f << i.frame << ' ' << (i.down ? 1 : 0) << ' ' << (i.p2 ? 1 : 0) << ' '
-			  << i.button << ' ' << i.x << ' ' << i.y << ' '
-			  << i.window << ' ' << i.left << ' ' << i.right << '\n';
-		}
-		return static_cast<bool>(f);
-	}
+    void toggleRecording() {
+        if (m_state == State::Recording) {
+            m_state = State::Idle;
+            log::info("Recording stopped. Total inputs: {}", m_inputs.size());
+        } else {
+            m_state = State::Recording;
+            m_inputs.clear();
+            m_currentFrame = 0;
+            log::info("Recording started.");
+        }
+    }
 
-	bool load(std::filesystem::path const& path) {
-		inputs.clear();
-		std::ifstream f(path);
-		if (!f) return false;
+    void togglePlayback() {
+        if (m_state == State::Playing) {
+            m_state = State::Idle;
+            log::info("Playback stopped.");
+        } else {
+            if (m_inputs.empty()) {
+                log::warn("No macro recorded to play!");
+                return;
+            }
+            m_state = State::Playing;
+            m_playbackIndex = 0;
+            m_currentFrame = 0;
+            log::info("Playback started.");
+        }
+    }
 
-		std::string magic;
-		size_t n = 0;
-		if (!(f >> magic >> n) || magic != "FWM1") return false;
-
-		inputs.reserve(n);
-		for (size_t k = 0; k < n; k++) {
-			FWInput i;
-			int d = 1, p = 0;
-			if (!(f >> i.frame >> d >> p >> i.button >> i.x >> i.y >> i.window >> i.left >> i.right)) break;
-			i.down = d != 0;
-			i.p2 = p != 0;
-			inputs.push_back(i);
-		}
-		std::stable_sort(inputs.begin(), inputs.end(), [](FWInput const& a, FWInput const& b) {
-			return a.frame < b.frame;
-		});
-		return !inputs.empty();
-	}
+    void recordInput(PlayerButton button, bool isDown, bool isPlayer1) {
+        if (m_state == State::Recording) {
+            m_inputs.push_back({m_currentFrame, button, isDown, isPlayer1});
+        }
+    }
+    
+    // The Practice Mode Fix: Rewinds the timeline on death
+    void syncOnReset() {
+        if (m_state == State::Recording) {
+            // Erase any inputs that occurred after the frame we just respawned at
+            m_inputs.erase(
+                std::remove_if(m_inputs.begin(), m_inputs.end(),
+                    [this](const MacroInput& input) { return input.frame >= this->m_currentFrame; }),
+                m_inputs.end()
+            );
+        } else if (m_state == State::Playing) {
+            // Rewind the playback index to match the respawn frame
+            m_playbackIndex = 0;
+            while (m_playbackIndex < m_inputs.size() && m_inputs[m_playbackIndex].frame < m_currentFrame) {
+                m_playbackIndex++;
+            }
+        }
+    }
 };
