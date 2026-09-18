@@ -1,52 +1,62 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <Geode/ui/Notification.hpp>
 #include "macro.hpp"
 
 using namespace geode::prelude;
 
-// Inherit directly from the game's native alert layer
 class MacroModMenu : public FLAlertLayer {
 protected:
-    // Added 'override' here to fix the compiler warning
-    bool init() override {
-        // 75 is the standard background dim opacity
+    PauseLayer* m_pauseLayer;
+
+    bool init(PauseLayer* pauseLayer) {
         if (!FLAlertLayer::init(75)) return false;
+        
+        // Save the pause layer so we can trigger a restart from it
+        m_pauseLayer = pauseLayer;
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         
-        // 1. Create the Background
         auto bg = CCScale9Sprite::create("GJ_square01.png", {0, 0, 80, 80});
         bg->setContentSize({320.f, 240.f});
         bg->setPosition(winSize.width / 2, winSize.height / 2);
         this->m_mainLayer->addChild(bg);
         
-        // 2. Create the Title
-        auto title = CCLabelBMFont::create("Macro Settings", "goldFont.fnt");
+        auto title = CCLabelBMFont::create("Macro Menu", "goldFont.fnt");
         title->setPosition(winSize.width / 2, winSize.height / 2 + 95.f);
         title->setScale(0.8f);
         this->m_mainLayer->addChild(title);
         
-        // 3. Create the Main Buttons
         auto menu = CCMenu::create();
         menu->setPosition(winSize.width / 2, winSize.height / 2);
         
-        auto toggleSpr = ButtonSprite::create("Toggle Macro");
-        auto toggleBtn = CCMenuItemSpriteExtra::create(
-            toggleSpr,
-            this,
-            menu_selector(MacroModMenu::onToggleMacro)
+        // 1. Record Button
+        auto recBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Record New Attempt"),
+            this, menu_selector(MacroModMenu::onRecord)
         );
         
-        menu->addChild(toggleBtn);
+        // 2. Play Button
+        auto playBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Play Macro"),
+            this, menu_selector(MacroModMenu::onPlay)
+        );
+
+        // 3. Stop Button
+        auto stopBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Stop / Idle"),
+            this, menu_selector(MacroModMenu::onStop)
+        );
+        
+        menu->addChild(recBtn);
+        menu->addChild(playBtn);
+        menu->addChild(stopBtn);
         menu->setLayout(ColumnLayout::create()->setGap(10.f));
         this->m_mainLayer->addChild(menu);
 
-        // 4. Create the Close Button
         auto closeBtnSpr = CCSprite::createWithSpriteFrameName("GJ_closeBtn_001.png");
         auto closeBtn = CCMenuItemSpriteExtra::create(
-            closeBtnSpr,
-            this,
-            menu_selector(MacroModMenu::onClose)
+            closeBtnSpr, this, menu_selector(MacroModMenu::onClose)
         );
         
         auto closeMenu = CCMenu::create();
@@ -54,7 +64,6 @@ protected:
         closeMenu->addChild(closeBtn);
         this->m_mainLayer->addChild(closeMenu);
 
-        // 5. Enable inputs
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
 
@@ -66,20 +75,42 @@ protected:
         this->removeFromParentAndCleanup(true);
     }
 
-    // Allows the Escape key / Android Back button to close the menu
     void keyBackClicked() override {
         this->onClose(nullptr);
     }
 
-    void onToggleMacro(CCObject* sender) {
-        log::info("Macro button pressed.");
-        FLAlertLayer::create("Macro", "Macro toggled!", "OK")->show();
+    void onRecord(CCObject*) {
+        MacroEngine::get().m_state = MacroEngine::State::Recording;
+        MacroEngine::get().m_inputs.clear();
+        geode::Notification::create("Recording Started", NotificationIcon::Info)->show();
+        
+        this->onClose(nullptr);
+        // Triggers the "Restart" button in the pause menu natively
+        if (m_pauseLayer) m_pauseLayer->onRestart(nullptr); 
+    }
+
+    void onPlay(CCObject*) {
+        if (MacroEngine::get().m_inputs.empty()) {
+            geode::Notification::create("No macro recorded!", NotificationIcon::Warning)->show();
+            return;
+        }
+        MacroEngine::get().m_state = MacroEngine::State::Playing;
+        geode::Notification::create("Playback Started", NotificationIcon::Info)->show();
+        
+        this->onClose(nullptr);
+        if (m_pauseLayer) m_pauseLayer->onRestart(nullptr);
+    }
+
+    void onStop(CCObject*) {
+        MacroEngine::get().m_state = MacroEngine::State::Idle;
+        geode::Notification::create("Macro Stopped", NotificationIcon::Info)->show();
+        this->onClose(nullptr);
     }
 
 public:
-    static MacroModMenu* create() {
+    static MacroModMenu* create(PauseLayer* pauseLayer) {
         auto ret = new MacroModMenu();
-        if (ret && ret->init()) {
+        if (ret && ret->init(pauseLayer)) {
             ret->autorelease();
             return ret;
         }
