@@ -29,28 +29,31 @@ class $modify(MyPauseLayer, PauseLayer) {
         MacroModMenu::create()->show();
     }
 
-    void keyDown(enumKeyCodes key) {
-        if (key == enumKeyCodes::KEY_M) {
+    // Updated signature with the two missing boolean arguments
+    void keyDown(cocos2d::enumKeyCodes key, bool isDown, bool isRepeat) {
+        if (key == cocos2d::enumKeyCodes::KEY_M) {
             this->onOpenMacroMenu(nullptr);
             return;
         }
-        PauseLayer::keyDown(key);
+        // Pass all arguments back to the original function
+        PauseLayer::keyDown(key, isDown, isRepeat);
     }
 };
 
 class $modify(MyMacroInputs, UILayer) {
-    void keyDown(enumKeyCodes key) {
-        if (key == enumKeyCodes::KEY_R) {
+    // Updated signature here as well
+    void keyDown(cocos2d::enumKeyCodes key, bool isDown, bool isRepeat) {
+        if (key == cocos2d::enumKeyCodes::KEY_R) {
             log::info("Recording triggered via Keybind");
             // MacroEngine::get()->startRecording();
             return; 
         } 
-        else if (key == enumKeyCodes::KEY_P) {
+        else if (key == cocos2d::enumKeyCodes::KEY_P) {
             log::info("Playback triggered via Keybind");
             // MacroEngine::get()->startPlayback();
             return;
         }
         
-        UILayer::keyDown(key);
+        UILayer::keyDown(key, isDown, isRepeat);
     }
 };
