@@ -1,9 +1,11 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/PlayerObject.hpp>
+#include <Geode/modify/PauseLayer.hpp>
 #include "Controller.hpp"
 #include "Macro.hpp"
 #include "CbotOverlay.hpp"
+#include "CbotSettingsPopup.hpp"
 
 using namespace geode::prelude;
 using namespace cocos2d;
@@ -19,7 +21,7 @@ public:
     Controller controller;
     bool recording = false;
     bool playing = false;
-    bool overlayOn = true;
+    bool overlayOn = false;
     int frame = 0;
     size_t playIndex = 0;
     CbotOverlay* hud = nullptr;
@@ -51,7 +53,7 @@ public:
                     break;
                 case Command::OverlayToggle:
                     overlayOn = !overlayOn;
-                    if (hud) hud->setCounterVisible(overlayOn);
+                    if (hud) hud->setVisible(overlayOn);
                     break;
             }
             refreshHud();
@@ -68,6 +70,7 @@ public:
 };
 
 static State g_state;
+State& getState() { return g_state; }
 
 class $modify(CBotPlayerObject, PlayerObject) {
     void pushButton(PlayerButton button) {
@@ -100,8 +103,7 @@ class $modify(CBotPlayLayer, PlayLayer) {
         auto hud = CbotOverlay::create();
         if (hud) {
             this->addChild(hud, 9999);
-            hud->setOnCommand([](Command c) { g_state.controller.command(c); });
-            hud->setCounterVisible(g_state.overlayOn);
+            hud->setVisible(g_state.overlayOn);
             g_state.hud = hud;
         }
 
@@ -110,9 +112,8 @@ class $modify(CBotPlayLayer, PlayLayer) {
     }
 
     void update(float dt) {
-        PlayLayer::update(dt);
-        ++g_state.frame;
-
+        // Inject any due inputs BEFORE the physics step runs this tick,
+        // so they're actually read on time instead of a frame late.
         if (g_state.playing) {
             auto& events = g_state.macro.events;
             while (g_state.playIndex < events.size() &&
@@ -130,6 +131,9 @@ class $modify(CBotPlayLayer, PlayLayer) {
                 g_state.playing = false;
         }
 
+        PlayLayer::update(dt);
+        ++g_state.frame;
+
         g_state.refreshHud();
     }
 
@@ -142,8 +146,37 @@ class $modify(CBotPlayLayer, PlayLayer) {
     }
 };
 
+class $modify(CBotPauseLayer, PauseLayer) {
+    bool init(bool level) {
+        if (!PauseLayer::init(level))
+            return false;
+
+        auto spr = ButtonSprite::create("CBot");
+        spr->setScale(.7f);
+        auto btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(CBotPauseLayer::onCbot));
+
+        if (auto menu = typeinfo_cast<CCMenu*>(this->getChildByID("pause-menu"))) {
+            menu->addChild(btn);
+            menu->updateLayout();
+        } else if (this->m_buttonMenu) {
+            this->m_buttonMenu->addChild(btn);
+            this->m_buttonMenu->updateLayout();
+        }
+
+        return true;
+    }
+
+    void onCbot(CCObject*) {
+        auto popup = CbotSettingsPopup::create();
+        if (popup) {
+            popup->setOnCommand([](Command c) { g_state.controller.command(c); });
+            popup->show();
+        }
+    }
+};
+
 }
 
 $execute {
-    log::info("CBot v0.2.0 loaded.");
+    log::info("CBot v0.3.0 loaded.");
 }
