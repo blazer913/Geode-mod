@@ -58,10 +58,22 @@ protected:
         return true;
     }
 
-    void onClose(CCObject*) {
-        this->setKeyboardEnabled(false);
-        this->removeFromParentAndCleanup(true);
+    void onStop(CCObject*) {
+    auto& engine = MacroEngine::get();
+    if (engine.m_state == MacroEngine::State::Recording) {
+        int count = static_cast<int>(engine.m_inputs.size());
+        engine.saveCurrentMacroToFile();
+        geode::Notification::create(
+            "Saved " + std::to_string(count) + " inputs!",
+            count > 0 ? NotificationIcon::Success : NotificationIcon::Warning
+        )->show();
+    } else {
+        geode::Notification::create("Macro Stopped", NotificationIcon::Info)->show();
     }
+
+    engine.m_state = MacroEngine::State::Idle;
+    this->onClose(nullptr);
+}
 
     void onSelectMacro(CCObject* sender) {
         auto btn = static_cast<CCNode*>(sender);
