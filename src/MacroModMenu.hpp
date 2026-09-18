@@ -163,7 +163,8 @@ protected:
 
     void onRecord(CCObject*) {
         MacroEngine::get().m_state = MacroEngine::State::Recording;
-        MacroEngine::get().m_inputs.clear(); 
+        MacroEngine::get().m_inputs.clear();
+        MacroEngine::get().debugPending = true;
         geode::Notification::create("Recording Started", NotificationIcon::Info)->show();
         
         this->onClose(nullptr);
