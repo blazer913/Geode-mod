@@ -156,8 +156,7 @@ class $modify(CBotPauseLayer, PauseLayer) {
 
         CCMenu* targetMenu = typeinfo_cast<CCMenu*>(this->getChildByID("pause-menu"));
         if (!targetMenu) {
-            CCObject* child;
-            CCARRAY_FOREACH(this->getChildren(), child) {
+            for (auto child : CCArrayExt<CCNode*>(this->getChildren())) {
                 if (auto menu = typeinfo_cast<CCMenu*>(child)) {
                     targetMenu = menu;
                     break;

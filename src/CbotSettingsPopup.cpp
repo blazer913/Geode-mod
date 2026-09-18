@@ -19,7 +19,7 @@ CbotSettingsPopup* CbotSettingsPopup::create() {
 }
 
 bool CbotSettingsPopup::init() {
-    if (!Popup::init(280.f, 200.f))
+    if (!Popup<>::init(280.f, 200.f))
         return false;
 
     this->setTitle("CBot");
