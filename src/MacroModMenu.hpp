@@ -58,22 +58,10 @@ protected:
         return true;
     }
 
-    void onStop(CCObject*) {
-    auto& engine = MacroEngine::get();
-    if (engine.m_state == MacroEngine::State::Recording) {
-        int count = static_cast<int>(engine.m_inputs.size());
-        engine.saveCurrentMacroToFile();
-        geode::Notification::create(
-            "Saved " + std::to_string(count) + " inputs!",
-            count > 0 ? NotificationIcon::Success : NotificationIcon::Warning
-        )->show();
-    } else {
-        geode::Notification::create("Macro Stopped", NotificationIcon::Info)->show();
+    void onClose(CCObject*) {
+        this->setKeyboardEnabled(false);
+        this->removeFromParentAndCleanup(true);
     }
-
-    engine.m_state = MacroEngine::State::Idle;
-    this->onClose(nullptr);
-}
 
     void onSelectMacro(CCObject* sender) {
         auto btn = static_cast<CCNode*>(sender);
@@ -154,8 +142,6 @@ protected:
         
         auto closeMenu = CCMenu::create();
         closeMenu->setPosition(winSize.width / 2 - 145.f, winSize.height / 2 + 105.f);
-        
-        // This is the line that was causing the crash. It is now correctly adding closeBtn.
         closeMenu->addChild(closeBtn); 
         
         this->m_mainLayer->addChild(closeMenu);
@@ -198,8 +184,12 @@ protected:
     void onStop(CCObject*) {
         auto& engine = MacroEngine::get();
         if (engine.m_state == MacroEngine::State::Recording) {
+            int count = static_cast<int>(engine.m_inputs.size());
             engine.saveCurrentMacroToFile();
-            geode::Notification::create("Macro Saved to File!", NotificationIcon::Success)->show();
+            geode::Notification::create(
+                "Saved " + std::to_string(count) + " inputs!",
+                count > 0 ? NotificationIcon::Success : NotificationIcon::Warning
+            )->show();
         } else {
             geode::Notification::create("Macro Stopped", NotificationIcon::Info)->show();
         }
