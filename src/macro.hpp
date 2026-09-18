@@ -26,7 +26,6 @@ public:
     size_t m_playbackIndex = 0;
     int m_currentFrame = 0;
     bool m_isPlaybackInput = false;
-    bool debugPending = false;
 
     static MacroEngine& get() {
         static MacroEngine instance;
@@ -34,9 +33,17 @@ public:
     }
 
     void recordInput(int button, bool isDown, bool isPlayer1) {
-        if (m_state == State::Recording && !m_isPlaybackInput) {
-            m_inputs.push_back({m_currentFrame, button, isDown, isPlayer1});
+        if (m_state != State::Recording || m_isPlaybackInput) return;
+
+        if (!m_inputs.empty()) {
+            auto& last = m_inputs.back();
+            if (last.frame == m_currentFrame && last.button == button &&
+                last.isDown == isDown && last.isPlayer1 == isPlayer1) {
+                return; // likely a duplicate from a second hook catching the same press
+            }
         }
+
+        m_inputs.push_back({m_currentFrame, button, isDown, isPlayer1});
     }
     
     void saveCurrentMacroToFile() {
