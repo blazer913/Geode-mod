@@ -11,6 +11,17 @@ using namespace geode::prelude;
 class $modify(MyPlayerObject, PlayerObject) {
     void pushButton(PlayerButton button) {
         PlayerObject::pushButton(button);
+
+        auto& engine = MacroEngine::get();
+        if (engine.debugPending) {
+            engine.debugPending = false;
+            geode::Notification::create(
+                "DEBUG: state=" + std::to_string(static_cast<int>(engine.m_state)) +
+                " isPlayback=" + std::to_string(engine.m_isPlaybackInput),
+                NotificationIcon::Info
+            )->show();
+        }
+
         this->recordFromPlayerObject(button, true);
     }
 
@@ -45,12 +56,8 @@ class $modify(MyPlayLayer, PlayLayer) {
             {
                 auto& input = engine.m_inputs[engine.m_playbackIndex];
 
-                // Flag to prevent the PlayerObject hook from re-recording this artificial input
                 engine.m_isPlaybackInput = true;
-
-                // Route through handleButton so game logic (rings, portals) processes it too
                 this->handleButton(input.isDown, input.button, input.isPlayer1);
-
                 engine.m_isPlaybackInput = false;
 
                 engine.m_playbackIndex++;
