@@ -18,11 +18,7 @@ struct Macro {
     double endTime = 0.0;
     std::vector<InputEvent> events;
 
-    void clear() { events.clear(); startTime = endTime = 0.0; }
-    void add(InputEvent e) {
-        if (events.empty()) startTime = e.time;
-        endTime = std::max(endTime, e.time);
-        events.push_back(e);
-    }
+    void clear();
+    void add(InputEvent e);
 };
 }
