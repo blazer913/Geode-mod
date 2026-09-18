@@ -154,15 +154,21 @@ class $modify(CBotPauseLayer, PauseLayer) {
         spr->setScale(.7f);
         auto btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(CBotPauseLayer::onCbot));
 
-        if (auto menu = typeinfo_cast<CCMenu*>(this->getChildByID("pause-menu"))) {
-            menu->addChild(btn);
-            menu->updateLayout();
-        } else if (this->m_buttonMenu) {
-            this->m_buttonMenu->addChild(btn);
-            this->m_buttonMenu->updateLayout();
+        CCMenu* targetMenu = typeinfo_cast<CCMenu*>(this->getChildByID("pause-menu"));
+        if (!targetMenu) {
+            CCObject* child;
+            CCARRAY_FOREACH(this->getChildren(), child) {
+                if (auto menu = typeinfo_cast<CCMenu*>(child)) {
+                    targetMenu = menu;
+                    break;
+                }
+            }
         }
-    }
-
+        if (targetMenu) {
+            targetMenu->addChild(btn);
+            targetMenu->updateLayout();
+        }
+}
     void onCbot(CCObject*) {
         auto popup = CbotSettingsPopup::create();
         if (popup) {
