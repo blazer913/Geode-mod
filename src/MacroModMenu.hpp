@@ -7,7 +7,8 @@ using namespace geode::prelude;
 // Inherit directly from the game's native alert layer
 class MacroModMenu : public FLAlertLayer {
 protected:
-    bool init() {
+    // Added 'override' here to fix the compiler warning
+    bool init() override {
         // 75 is the standard background dim opacity
         if (!FLAlertLayer::init(75)) return false;
 
@@ -86,4 +87,3 @@ public:
         return nullptr;
     }
 };
-0
