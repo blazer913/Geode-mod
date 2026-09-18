@@ -1,15 +1,16 @@
 #pragma once
 #include <Geode/Geode.hpp>
 #include <vector>
-#include <map>
 #include <string>
-#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 
 using namespace geode::prelude;
 
 struct MacroInput {
     int frame;
-    int button; // Stored as int to easily cast back to PlayerButton
+    int button; 
     bool isDown;
     bool isPlayer1;
 };
@@ -19,13 +20,11 @@ public:
     enum class State { Idle, Recording, Playing };
     
     State m_state = State::Idle;
-    std::vector<MacroInput> m_inputs; // The active macro
-    
-    // Storage for all saved macros
-    std::map<std::string, std::vector<MacroInput>> m_savedMacros;
+    std::vector<MacroInput> m_inputs;
     
     size_t m_playbackIndex = 0;
     int m_currentFrame = 0;
+    bool m_isPlaybackInput = false; 
 
     static MacroEngine& get() {
         static MacroEngine instance;
@@ -33,17 +32,79 @@ public:
     }
 
     void recordInput(int button, bool isDown, bool isPlayer1) {
-        if (m_state == State::Recording) {
+        if (m_state == State::Recording && !m_isPlaybackInput) {
             m_inputs.push_back({m_currentFrame, button, isDown, isPlayer1});
         }
     }
     
-    void saveCurrentMacro() {
+    void saveCurrentMacroToFile() {
         if (m_inputs.empty()) return;
         
-        // Auto-generate a name (e.g., "Macro 1", "Macro 2")
-        std::string macroName = "Macro " + std::to_string(m_savedMacros.size() + 1);
-        m_savedMacros[macroName] = m_inputs;
+        auto saveDir = Mod::get()->getSaveDir();
+        std::filesystem::create_directories(saveDir); // Ensure dir exists
+        
+        int count = 1;
+        auto path = saveDir / ("Macro_" + std::to_string(count) + ".txt");
+        
+        // Find the next available file number
+        while (std::filesystem::exists(path)) {
+            count++;
+            path = saveDir / ("Macro_" + std::to_string(count) + ".txt");
+        }
+        
+        std::ofstream file(path);
+        if (file.is_open()) {
+            for (const auto& input : m_inputs) {
+                file << input.frame << "," << input.button << "," 
+                     << input.isDown << "," << input.isPlayer1 << "\n";
+            }
+            file.close();
+            log::info("Macro saved to: {}", path.string());
+        }
+    }
+    
+    bool loadMacroFromFile(const std::string& filename) {
+        auto path = Mod::get()->getSaveDir() / filename;
+        std::ifstream file(path);
+        
+        if (!file.is_open()) return false;
+        
+        m_inputs.clear();
+        std::string line;
+        
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            std::string item;
+            MacroInput input;
+            
+            try {
+                std::getline(ss, item, ','); input.frame = std::stoi(item);
+                std::getline(ss, item, ','); input.button = std::stoi(item);
+                std::getline(ss, item, ','); input.isDown = std::stoi(item) != 0;
+                std::getline(ss, item, ','); input.isPlayer1 = std::stoi(item) != 0;
+                m_inputs.push_back(input);
+            } catch (...) {
+                log::error("Corrupted line in macro file: {}", line);
+                continue; // Skip bad lines
+            }
+        }
+        
+        file.close();
+        return true;
+    }
+
+    std::vector<std::string> getSavedMacroFiles() {
+        std::vector<std::string> files;
+        auto saveDir = Mod::get()->getSaveDir();
+        
+        if (std::filesystem::exists(saveDir)) {
+            for (const auto& entry : std::filesystem::directory_iterator(saveDir)) {
+                if (entry.path().extension() == ".txt") {
+                    files.push_back(entry.path().filename().string());
+                }
+            }
+        }
+        return files;
     }
     
     void syncOnReset() {
