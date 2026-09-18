@@ -17,22 +17,19 @@ class $modify(MyPlayLayer, PlayLayer) {
 
         engine.m_currentFrame++;
 
-        // Inject inputs directly into the PlayerObject for 100% reliability
         if (engine.m_state == MacroEngine::State::Playing) {
             while (engine.m_playbackIndex < engine.m_inputs.size() && 
                    engine.m_inputs[engine.m_playbackIndex].frame <= engine.m_currentFrame) 
             {
                 auto& input = engine.m_inputs[engine.m_playbackIndex];
                 
-                PlayerObject* targetPlayer = input.isPlayer1 ? this->m_player1 : this->m_player2;
+                // Flag to prevent the GJBaseGameLayer hook from recording this artificial click
+                engine.m_isPlaybackInput = true;
                 
-                if (targetPlayer) {
-                    if (input.isDown) {
-                        targetPlayer->pushButton(static_cast<PlayerButton>(input.button));
-                    } else {
-                        targetPlayer->releaseButton(static_cast<PlayerButton>(input.button));
-                    }
-                }
+                // Route through the layer so game logic (rings, portals) processes it
+                this->handleButton(input.isDown, input.button, input.isPlayer1);
+                
+                engine.m_isPlaybackInput = false;
                 
                 engine.m_playbackIndex++;
             }
@@ -52,11 +49,9 @@ class $modify(MyPlayLayer, PlayLayer) {
         if (this->m_isPracticeMode) {
              engine.syncOnReset();
         } else {
-             // Normal mode death: keep state, reset frame to 0
              engine.m_currentFrame = 0;
              engine.m_playbackIndex = 0;
              
-             // If recording, clear inputs so the new attempt starts clean
              if (engine.m_state == MacroEngine::State::Recording) {
                  engine.m_inputs.clear(); 
              }
@@ -68,8 +63,7 @@ class $modify(MyGameLayer, GJBaseGameLayer) {
     void handleButton(bool isDown, int button, bool isPlayer1) {
         auto& engine = MacroEngine::get();
         
-        // Record real player inputs
-        if (engine.m_state == MacroEngine::State::Recording) {
+        if (engine.m_state == MacroEngine::State::Recording && !engine.m_isPlaybackInput) {
             engine.recordInput(button, isDown, isPlayer1);
         }
 
