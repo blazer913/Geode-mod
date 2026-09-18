@@ -1,10 +1,18 @@
 #include "Macro.hpp"
 #include <algorithm>
+
 namespace cbot {
-void Macro::clear() { events.clear(); startFrame=endFrame=0; }
+void Macro::clear() {
+    events.clear();
+    startTime = 0.0;
+    endTime = 0.0;
+}
+
 void Macro::add(InputEvent e) {
-    if (events.empty()) startFrame=e.frame;
-    endFrame=std::max(endFrame,e.frame);
+    if (events.empty()) {
+        startTime = e.time;
+    }
+    endTime = std::max(endTime, e.time);
     events.push_back(e);
 }
 }
