@@ -1,11 +1,11 @@
 #pragma once
 #include <Geode/Geode.hpp>
-#include <algorithm>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <algorithm>
 
 using namespace geode::prelude;
 
@@ -25,7 +25,8 @@ public:
     
     size_t m_playbackIndex = 0;
     int m_currentFrame = 0;
-    bool m_isPlaybackInput = false; 
+    bool m_isPlaybackInput = false;
+    bool debugPending = false;
 
     static MacroEngine& get() {
         static MacroEngine instance;
@@ -42,12 +43,11 @@ public:
         if (m_inputs.empty()) return;
         
         auto saveDir = Mod::get()->getSaveDir();
-        std::filesystem::create_directories(saveDir); // Ensure dir exists
+        std::filesystem::create_directories(saveDir);
         
         int count = 1;
         auto path = saveDir / ("Macro_" + std::to_string(count) + ".txt");
         
-        // Find the next available file number
         while (std::filesystem::exists(path)) {
             count++;
             path = saveDir / ("Macro_" + std::to_string(count) + ".txt");
@@ -86,7 +86,7 @@ public:
                 m_inputs.push_back(input);
             } catch (...) {
                 log::error("Corrupted line in macro file: {}", line);
-                continue; // Skip bad lines
+                continue;
             }
         }
         
