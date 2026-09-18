@@ -29,7 +29,7 @@ State& getState() {
 
 void State::refreshHud() {
     if (!hud) return;
-    hud->setFrame(static_cast<int>(time * 1000)); // Display ms instead of frames
+    hud->setFrame(static_cast<int>(time * 1000)); 
     if (recording)
         hud->setStatus("RECORDING");
     else if (playing)
@@ -44,7 +44,7 @@ static void installController() {
             case Command::RecordToggle:
                 g_state.recording = !g_state.recording;
                 g_state.playing = false;
-                g_state.needsReset = true; // Safely wait for unpause
+                g_state.needsReset = true; 
                 break;
 
             case Command::PlayPause:
@@ -122,13 +122,12 @@ class $modify(CBotPlayLayer, PlayLayer) {
     void resetLevel() {
         PlayLayer::resetLevel();
 
-        // Practice Mode Rollback Logic
         if (this->m_isPracticeMode && !g_state.checkpoints.empty()) {
             auto& cp = g_state.checkpoints.back();
             g_state.time = cp.time;
             g_state.playIndex = cp.playIndex;
             if (g_state.recording) {
-                g_state.macro.events.resize(cp.macroSize); // Truncate dead inputs
+                g_state.macro.events.resize(cp.macroSize); 
             }
         } else {
             g_state.time = 0.0;
@@ -139,13 +138,14 @@ class $modify(CBotPlayLayer, PlayLayer) {
         g_state.refreshHud();
     }
 
-    void markCheckpoint() {
-        PlayLayer::markCheckpoint();
+    CheckpointObject* markCheckpoint() {
+        auto cp = PlayLayer::markCheckpoint();
         g_state.checkpoints.push_back({ g_state.time, g_state.macro.events.size(), g_state.playIndex });
+        return cp;
     }
 
-    void removeLastCheckpoint() {
-        PlayLayer::removeLastCheckpoint();
+    void removeCheckpoint(bool first) {
+        PlayLayer::removeCheckpoint(first);
         if (!g_state.checkpoints.empty()) g_state.checkpoints.pop_back();
     }
 
@@ -156,7 +156,7 @@ class $modify(CBotPlayLayer, PlayLayer) {
             return;
         }
 
-        g_state.time += dt; // Accumulate dt (automatically handles speedhack)
+        g_state.time += dt; 
 
         if (g_state.playing) {
             auto& events = g_state.macro.events;
