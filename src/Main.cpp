@@ -147,9 +147,8 @@ class $modify(CBotPlayLayer, PlayLayer) {
 };
 
 class $modify(CBotPauseLayer, PauseLayer) {
-    bool init(bool level) {
-        if (!PauseLayer::init(level))
-            return false;
+    void customSetup() {
+        PauseLayer::customSetup();
 
         auto spr = ButtonSprite::create("CBot");
         spr->setScale(.7f);
@@ -162,8 +161,6 @@ class $modify(CBotPauseLayer, PauseLayer) {
             this->m_buttonMenu->addChild(btn);
             this->m_buttonMenu->updateLayout();
         }
-
-        return true;
     }
 
     void onCbot(CCObject*) {
