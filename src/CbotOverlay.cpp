@@ -18,7 +18,7 @@ CbotOverlay* CbotOverlay::create() {
 bool CbotOverlay::init() {
     if (!CCLayer::init()) return false;
 
-    m_frameLabel = CCLabelBMFont::create("FRAME 0", "bigFont.fnt");
+    m_frameLabel = CCLabelBMFont::create("TIME 0ms", "bigFont.fnt");
     m_frameLabel->setScale(.45f);
     m_frameLabel->setAnchorPoint({0.f, 1.f});
     m_frameLabel->setPosition({12.f, -50.f});
@@ -37,9 +37,9 @@ bool CbotOverlay::init() {
     return true;
 }
 
-void CbotOverlay::setFrame(int frame) {
+void CbotOverlay::setFrame(int timeMs) {
     if (m_frameLabel)
-        m_frameLabel->setString(("FRAME " + std::to_string(frame)).c_str());
+        m_frameLabel->setString(("TIME " + std::to_string(timeMs) + "ms").c_str());
 }
 
 void CbotOverlay::setStatus(std::string const& status) {
