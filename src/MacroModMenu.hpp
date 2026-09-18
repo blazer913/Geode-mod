@@ -5,9 +5,6 @@
 
 using namespace geode::prelude;
 
-// ==========================================
-// MENU 2: THE MACRO SELECTION SCREEN
-// ==========================================
 class MacroSelectMenu : public FLAlertLayer {
 protected:
     PauseLayer* m_pauseLayer;
@@ -23,23 +20,23 @@ protected:
         bg->setPosition(winSize.width / 2, winSize.height / 2);
         this->m_mainLayer->addChild(bg);
         
-        auto title = CCLabelBMFont::create("Select a Macro", "goldFont.fnt");
+        auto title = CCLabelBMFont::create("Select File to Load", "goldFont.fnt");
         title->setPosition(winSize.width / 2, winSize.height / 2 + 95.f);
-        title->setScale(0.8f);
+        title->setScale(0.7f);
         this->m_mainLayer->addChild(title);
         
         auto menu = CCMenu::create();
         menu->setPosition(winSize.width / 2, winSize.height / 2);
         
-        // Loop through saved macros and create a button for each
-        auto& saved = MacroEngine::get().m_savedMacros;
-        for (auto const& [name, inputs] : saved) {
-            auto btnSpr = ButtonSprite::create(name.c_str());
+        // Scan the directory for .txt files and create buttons
+        auto savedFiles = MacroEngine::get().getSavedMacroFiles();
+        for (const auto& filename : savedFiles) {
+            auto btnSpr = ButtonSprite::create(filename.c_str());
+            btnSpr->setScale(0.75f);
             auto btn = CCMenuItemSpriteExtra::create(
                 btnSpr, this, menu_selector(MacroSelectMenu::onSelectMacro)
             );
-            // Store the name in the button's ID so we know which one was clicked
-            btn->setID(name);
+            btn->setID(filename); // Store filename in the ID
             menu->addChild(btn);
         }
         
@@ -69,16 +66,18 @@ protected:
 
     void onSelectMacro(CCObject* sender) {
         auto btn = static_cast<CCNode*>(sender);
-        std::string macroName = btn->getID();
+        std::string filename = btn->getID();
         
         auto& engine = MacroEngine::get();
-        engine.m_inputs = engine.m_savedMacros[macroName];
-        engine.m_state = MacroEngine::State::Playing;
-        
-        geode::Notification::create("Playing: " + macroName, NotificationIcon::Info)->show();
-        
-        this->onClose(nullptr);
-        if (m_pauseLayer) m_pauseLayer->onRestart(nullptr);
+        if (engine.loadMacroFromFile(filename)) {
+            engine.m_state = MacroEngine::State::Playing;
+            geode::Notification::create("Loaded: " + filename, NotificationIcon::Info)->show();
+            
+            this->onClose(nullptr);
+            if (m_pauseLayer) m_pauseLayer->onRestart(nullptr);
+        } else {
+            geode::Notification::create("Failed to load file", NotificationIcon::Error)->show();
+        }
     }
 
 public:
@@ -93,10 +92,6 @@ public:
     }
 };
 
-
-// ==========================================
-// MENU 1: THE MAIN PAUSE MENU HUB
-// ==========================================
 class MacroModMenu : public FLAlertLayer {
 protected:
     PauseLayer* m_pauseLayer;
@@ -126,7 +121,7 @@ protected:
         );
         
         auto playBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Play Macro"),
+            ButtonSprite::create("Load & Play Macro"),
             this, menu_selector(MacroModMenu::onPlay)
         );
 
@@ -148,7 +143,7 @@ protected:
         
         auto closeMenu = CCMenu::create();
         closeMenu->setPosition(winSize.width / 2 - 145.f, winSize.height / 2 + 105.f);
-        closeMenu->addChild(closeBtn);
+        closeMenu->addChild(closeMenu);
         this->m_mainLayer->addChild(closeMenu);
 
         this->setKeypadEnabled(true);
@@ -168,7 +163,7 @@ protected:
 
     void onRecord(CCObject*) {
         MacroEngine::get().m_state = MacroEngine::State::Recording;
-        MacroEngine::get().m_inputs.clear(); // Fresh start
+        MacroEngine::get().m_inputs.clear(); 
         geode::Notification::create("Recording Started", NotificationIcon::Info)->show();
         
         this->onClose(nullptr);
@@ -176,12 +171,12 @@ protected:
     }
 
     void onPlay(CCObject*) {
-        if (MacroEngine::get().m_savedMacros.empty()) {
-            geode::Notification::create("No macros saved yet!", NotificationIcon::Warning)->show();
+        auto savedFiles = MacroEngine::get().getSavedMacroFiles();
+        if (savedFiles.empty()) {
+            geode::Notification::create("No files found in save dir!", NotificationIcon::Warning)->show();
             return;
         }
         
-        // Open the selection menu and close this one
         MacroSelectMenu::create(m_pauseLayer)->show();
         this->onClose(nullptr);
     }
@@ -189,8 +184,8 @@ protected:
     void onStop(CCObject*) {
         auto& engine = MacroEngine::get();
         if (engine.m_state == MacroEngine::State::Recording) {
-            engine.saveCurrentMacro();
-            geode::Notification::create("Macro Saved!", NotificationIcon::Success)->show();
+            engine.saveCurrentMacroToFile();
+            geode::Notification::create("Macro Saved to File!", NotificationIcon::Success)->show();
         } else {
             geode::Notification::create("Macro Stopped", NotificationIcon::Info)->show();
         }
