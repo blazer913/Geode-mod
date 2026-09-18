@@ -1,15 +1,73 @@
 {
-  "geode": "5.10.1",
-  "gd": {
-    "win": "2.2081",
-    "android": "2.2081"
-  },
-  "id": "blaze.cbot",
-  "name": "CBot",
-  "version": "v0.1.0",
-  "developers": [
-    "Blaze"
-  ],
-  "description": "Cross-platform Geometry Dash macro recorder, playback and frame tools.",
-  "repository": "https://github.com/blazer913/Geod"
+	"geode": "4.6.0",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "yourname.framewindow-macro",
+	"name": "Frame Window Macro",
+	"version": "v1.0.0",
+	"developer": "yourname",
+	"description": "Macro recorder/replayer that measures how many frames of wiggle room every input has and shows it in the level.",
+	"settings": {
+		"show-hud": {
+			"type": "bool",
+			"name": "Show HUD",
+			"description": "Show the record / play / analyze buttons in levels.",
+			"default": true
+		},
+		"noclip": {
+			"type": "bool",
+			"name": "Noclip",
+			"description": "Ignore hazards. Level completions are not counted while this is on.",
+			"default": false
+		},
+		"speed": {
+			"type": "float",
+			"name": "Speedhack",
+			"description": "Game speed multiplier inside levels. Completions are not counted while this is not 1.",
+			"default": 1.0,
+			"min": 0.05,
+			"max": 20.0
+		},
+		"show-indicators": {
+			"type": "bool",
+			"name": "Show click indicators",
+			"description": "Draw a marker with the frame window at every recorded input.",
+			"default": true
+		},
+		"indicator-scale": {
+			"type": "float",
+			"name": "Indicator scale",
+			"default": 1.0,
+			"min": 0.3,
+			"max": 3.0
+		},
+		"max-window": {
+			"type": "int",
+			"name": "Max frames tested per side",
+			"description": "How far each input is moved earlier / later when measuring its window.",
+			"default": 10,
+			"min": 2,
+			"max": 30
+		},
+		"lookahead": {
+			"type": "int",
+			"name": "Survival lookahead (frames)",
+			"description": "After the next input, how many more frames the player must survive for a shifted input to count as a success.",
+			"default": 30,
+			"min": 5,
+			"max": 120
+		},
+		"analysis-speed": {
+			"type": "float",
+			"name": "Analysis speed",
+			"description": "Game speed while the analyzer is replaying the level.",
+			"default": 8.0,
+			"min": 1.0,
+			"max": 20.0
+		}
+	}
 }
