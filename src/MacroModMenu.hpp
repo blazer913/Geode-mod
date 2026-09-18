@@ -28,7 +28,6 @@ protected:
         auto menu = CCMenu::create();
         menu->setPosition(winSize.width / 2, winSize.height / 2);
         
-        // Scan the directory for .txt files and create buttons
         auto savedFiles = MacroEngine::get().getSavedMacroFiles();
         for (const auto& filename : savedFiles) {
             auto btnSpr = ButtonSprite::create(filename.c_str());
@@ -36,7 +35,7 @@ protected:
             auto btn = CCMenuItemSpriteExtra::create(
                 btnSpr, this, menu_selector(MacroSelectMenu::onSelectMacro)
             );
-            btn->setID(filename); // Store filename in the ID
+            btn->setID(filename); 
             menu->addChild(btn);
         }
         
@@ -143,7 +142,10 @@ protected:
         
         auto closeMenu = CCMenu::create();
         closeMenu->setPosition(winSize.width / 2 - 145.f, winSize.height / 2 + 105.f);
-        closeMenu->addChild(closeMenu);
+        
+        // This is the line that was causing the crash. It is now correctly adding closeBtn.
+        closeMenu->addChild(closeBtn); 
+        
         this->m_mainLayer->addChild(closeMenu);
 
         this->setKeypadEnabled(true);
