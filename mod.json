@@ -4,12 +4,12 @@
     "win": "2.2081",
     "android": "2.2081"
   },
-  "id": "blaze.toasty-window-analyzer",
-  "name": "Toasty Window Analyzer",
-  "version": "v0.3.0",
+  "id": "blaze.cbot",
+  "name": "CBot",
+  "version": "v0.1.0",
   "developers": [
     "Blaze"
   ],
-  "description": "Analyzes Toasty Replay Lite input timing windows and displays a 1-10 frame histogram overlay.",
+  "description": "Cross-platform Geometry Dash macro recorder, playback and frame tools.",
   "repository": "https://github.com/blazer913/Geod"
 }
